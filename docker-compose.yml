@@ -3,27 +3,44 @@ services:
   postgres:
     image: postgres:latest
     environment:
-      - POSTGRES_PASSWORD: postgres_password
+      - POSTGRES_PASSWORD=postgres_password
+    ports:
+      - 5432:5432
+
   api:
     build:
-      dockerfile: dockerfile
-      context: ./server
+      dockerfile: Dockerfile
+      context: "./server"
     volumes:
-      - app/node_modules
       - ./server:/app
+      - /app/node_modules
     environment:
-      - pgUser = postgres
-      - pgHost = postgres
-      - pgDatabase = PGDApostgrespostgresTABASE
-      - pgPassword = postgres_password
-      - pgPort = 5432
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=postgres_password
+      - PGPORT=5432
+    ports:
+      - 5000:5000
+
   client:
-    stdin_open : true
+    stdin_open: true
     build:
-      dockerfile: 
-      context: ./client
+      dockerfile: Dockerfile
+      context: "./client"
     volumes:
-      -/app/node_modules
-      -./client:/app
+      - ./client:/app
+      - /app/node_modules
+    ports:
+      - 3000:3000
+
   nginx:
-      
+    depends_on:
+      - api
+      - client
+    restart: always
+    build:
+      dockerfile: Dockerfile
+      context: "./nginx"
+    ports:
+      - '3050:80'
